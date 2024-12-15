@@ -40,7 +40,6 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 	// Create an envelope{"movie": movie} instance and pass it to writeJSON(), instead of passing the plain movie struct
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
-		app.logger.Println(err)
-		http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 	}
 }
