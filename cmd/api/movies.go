@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"greenlight/internal/data"
 	"net/http"
@@ -55,9 +54,12 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	// Importantly, notice that when we call Decode() we pass a *pointer* to the input struct as the target decode destination. If there was an error during decoding,
 	// we also use our generic errorResponse() helper to send the client a 400 Bad Request response containing the error message
 	// We could use unmarshal, but it's more verbose and requires about 80% more memory.
-	err := json.NewDecoder(r.Body).Decode(&input)
+	// Now use the new readJSON() helper to decode the request body into the input struct.
+	// If this returns an error we send the client the error message along with a 400
+	// Bad Request status, just like before
+	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
