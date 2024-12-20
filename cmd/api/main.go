@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/lib/pq"
+	"greenlight/internal/data"
 	"log"
 	"net/http"
 	"os"
@@ -36,9 +37,11 @@ type config struct {
 
 // Define an application struct to hold the dependencies for our HTTP handlers, helpers, and middleware.
 // At the moment this only contains a copy of the config struct and a logger, but it will grow to include a lot more as our build progresses.
+// Add a models field to hour new Models struct
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -75,9 +78,11 @@ func main() {
 	logger.Printf("database connection pool established")
 
 	// Declare an instance of the application struct, containing the config struct and the logger
+	// Use the data.NewModels() function to initialize a Models struct, passing in the connection pool as a parameter
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	// Declare an HTTP server with some sensible timeout settings, which listens on the port provided in the config struct and uses the serve mux we created above as the handler
