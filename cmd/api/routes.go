@@ -19,6 +19,8 @@ func (app *application) routes() *httprouter.Router {
 	// Register the relevant methods, URL patterns and handler functions for our endpoints using the HandlerFunc() method.
 	// Note that http.MethodGet and http.MethodPost are constants which equate to the strings "GET" and "POST" respectively
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
+	// Add the route for the GET /v1/movies endpoint
+	router.HandlerFunc(http.MethodGet, "/v1/movies", app.listMoviesHandler)
 	router.HandlerFunc(http.MethodPost, "/v1/movies", app.createMovieHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.showMovieHandler)
 	// PUT is meant to replace the entire resource. PATCH is partial
