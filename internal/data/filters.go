@@ -45,3 +45,11 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 	// Check that the sort parameter matches a value in the safelist.
 	v.Check(validator.In(f.Sort, f.SortSafeList...), "sort", "invalid sort value")
 }
+
+func (f Filters) limit() int {
+	return f.PageSize
+}
+
+func (f Filters) offset() int {
+	return (f.Page - 1) * f.PageSize
+}
