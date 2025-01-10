@@ -32,6 +32,7 @@ type config struct {
 		maxOpenConns int
 		maxIdleConns int
 		maxIdleTime  string
+		sdsd         string
 	}
 }
 
