@@ -9,6 +9,7 @@ import (
 // Later, we'll upgrade this to use structured logging, and record additional information about the request including the HTTP method and URL
 func (app *application) logError(r *http.Request, err error) {
 	app.logger.Println(err)
+	app.logger.Println(r)
 }
 
 // The errorResponse() method is a generic helper for sending JSON-formatted error messages to the client with a given status code.
