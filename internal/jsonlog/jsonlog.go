@@ -1,9 +1,12 @@
 package jsonlog
 
 import (
+	"encoding/json"
 	"io"
 	"os"
+	"runtime/debug"
 	"sync"
+	"time"
 )
 
 // Define a Level type to represent the severity level for a log entry.
@@ -74,6 +77,47 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 		return 0, nil
 	}
 
-	// TODO: Declare an anonymous struct holding the data for the log entry.
-	return 1, nil
+	// Declare an anonymous struct holding the data for the log entry.
+	aux := struct {
+		Level      string            `json:"level"`
+		Time       string            `json:"time"`
+		Message    string            `json:"message"`
+		Properties map[string]string `json:"properties,omitempty"`
+		Trace      string            `json:"trace,omitempty"`
+	}{
+		Level:      level.String(),
+		Time:       time.Now().UTC().Format(time.RFC3339),
+		Message:    message,
+		Properties: properties,
+	}
+
+	// Include a setack trace for entries at the Error and FATAL levels.
+	if level >= LevelError {
+		aux.Trace = string(debug.Stack())
+	}
+
+	// Declare a live variable for holding the actual log entry text.
+	var line []byte
+
+	// Marshal the anonymous struct to JSON and store it in the line variable.
+	// If there was a problem creating the JSON, set the contents of the log entry to be that.
+	// plain-text error message instead.
+	line, err := json.Marshal(aux)
+	if err != nil {
+		line = []byte(LevelError.String() + ": unable to marshal log message:" + err.Error())
+	}
+
+	// Lock the mutex so that no two writes to the output destinpation cannot happe n concurrently.
+	// If we don't do this, it's possible that the text for two or more log entries will be intermingled in the output
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	// Write the log entry followed by a newline.
+	return l.out.Write(append(line, '\n'))
+}
+
+// We also implement a Write() method on our Logger type so that it satisfies the io.Writer interface.
+// This writes a log entry at the ERROR level with no additional properties
+func (l *Logger) Write(message []byte) (n int, err error) {
+	return l.print(LevelError, string(message), nil)
 }

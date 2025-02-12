@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	_ "github.com/lib/pq"
 	"greenlight/internal/data"
-	"log"
+	"greenlight/internal/jsonlog"
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 // Declare a string containing the application version number. Later in the book we'll generate
@@ -41,7 +42,7 @@ type config struct {
 // Add a models field to hour new Models struct
 type application struct {
 	config config
-	logger *log.Logger
+	logger *jsonlog.Logger
 	models data.Models
 }
 
@@ -63,20 +64,24 @@ func main() {
 	flag.Parse()
 
 	// Initialize a new logger which writes messages to the standard out stream, prefixed with the current date and time.
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	// Initialize a new jsonlog.Logger which writes any messages *at or above* the INFO
+	// severity level to the standard out stream.
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	// Call the openDB() helper function (see below) to create the connection pool, passing in the config struct.
 	// If this returns an error, we log it and exit the application immediately.
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		// Use the PrintFatal() method to write a log entry containing the error at the FATAL level and exit.
+		// We have no additional properties to include in the log entry.
+		// So we pass nil as the second parameter.
+		logger.PrintFatal(err, nil)
 	}
 
 	// Defer a call to db.Close() so that the connection pool is closed before the main() function exists
 	defer db.Close()
-
-	// Also log a message to say that the connection pool has been successfully established.
-	logger.Printf("database connection pool established")
+	// Likewise use the PrintInfo() method to write a message at the INFO level.
+	logger.PrintInfo("database connection pool established", nil)
 
 	// Declare an instance of the application struct, containing the config struct and the logger
 	// Use the data.NewModels() function to initialize a Models struct, passing in the connection pool as a parameter
@@ -95,11 +100,18 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	// Start the HTTP server.
-	logger.Printf("Starting %s server on %s", cfg.env, srv.Addr)
+	// Again, we use the PrintInfo method to write a starting server message at the INFO level.
+	// But this time we pass a map containing additional properties
+	// The operating environment and server address as the final parameter.
+	logger.PrintInfo("starting server", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
+
 	// Because the err variable is now already declared in the code above, we need to use the = operator here, instead of the := operator.
 	err = srv.ListenAndServe()
-	logger.Fatal(err)
+	// Use the PrintFatal() method to log the error and exit.
+	logger.PrintFatal(err, nil)
 }
 
 // The openDB() function returns a sql.DB connection pool
