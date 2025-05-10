@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
 	"greenlight/internal/data"
 	"greenlight/internal/jsonlog"
-	"net/http"
 	"os"
 	"time"
 
@@ -92,26 +90,32 @@ func main() {
 	}
 
 	// Declare an HTTP server with some sensible timeout settings, which listens on the port provided in the config struct and uses the serve mux we created above as the handler
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	// srv := &http.Server{
+	// Addr:         fmt.Sprintf(":%d", cfg.port),
+	// Handler:      app.routes(),
+	// IdleTimeout:  time.Minute,
+	// ReadTimeout:  10 * time.Second,
+	// WriteTimeout: 30 * time.Second,
+	// }
+	//
+	// Call app.serve() to start the server
+	err = app.serve()
+	if err != nil {
+		logger.PrintFatal(err, nil)
 	}
 
 	// Again, we use the PrintInfo method to write a starting server message at the INFO level.
 	// But this time we pass a map containing additional properties
 	// The operating environment and server address as the final parameter.
-	logger.PrintInfo("starting server", map[string]string{
-		"addr": srv.Addr,
-		"env":  cfg.env,
-	})
+	// logger.PrintInfo("starting server", map[string]string{
+	// "addr": srv.Addr,
+	// "env":  cfg.env,
+	// })
 
 	// Because the err variable is now already declared in the code above, we need to use the = operator here, instead of the := operator.
-	err = srv.ListenAndServe()
+	// err = srv.ListenAndServe()
 	// Use the PrintFatal() method to log the error and exit.
-	logger.PrintFatal(err, nil)
+	// logger.PrintFatal(err, nil)
 }
 
 // The openDB() function returns a sql.DB connection pool
